@@ -1,6 +1,6 @@
 ## Synopsis
 
-A simple and easy to follow matlab code for generating optimized minimum time cubic splines with general boundary velocities and maximum velocity constraints.
+A simple and easy to follow matlab code demonstrating the generation of optimized minimum time cubic splines with general boundary velocities and maximum velocity constraints.
 It also includes multivariable spline generation as usually is the case for robotic manipulator. 
 Further constraints can be easily added for single or multiple variables.
 
