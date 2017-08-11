@@ -1,0 +1,50 @@
+function [qdot_con1, qdot_con2] = con_fun_dynamic(h, n_discretized, ndof, q, qdot_b, qdot_max, dyn_params_M, dyn_params_B, dyn_params_C, dyn_params_G)
+
+t = zeros(length(h)+1, 1);
+t(1) = 0;
+for i=2:length(h)+1
+t(i) = t(i-1) + h(i-1);
+end
+tUpper = t(2:end);  
+tLower = t(1:end-1);   
+qdot_cont1 = zeros(length(h) * ndof, 1);
+vC2 = zeros(length(h) * ndof, 1);
+
+[s0, s1, s2, s3, qddotLower, qddotUpper, hrep] = cubic_spline_multiple(ndof, h, q, qdot_b); 
+qdot_endpoints = -3 .* s0' *(hrep).^2 + s2' - s3';
+temp = abs(qdot_endpoints) - repmat(qdot_max, [1, ndof]);
+qdot_con1 = reshape(temp, [numel(temp), 1]);
+inflexion_check(qddotLower .* qddotUpper < 0) = 1;
+t_midpoint = t + hrep .* qddotLower ./ (qddotLower - qddotUpper)
+
+for m = 1:ndof
+    [s0, s1, s2, s3, mLower, mUpper] = cubic_spline(h, q(:,m), qdot_b(:,m)); 
+    for i=1:length(h)
+        if(mLower(i)*mUpper(i) < 0);
+            t_midpoint = t(i) + h(i)*mLower(i)/(mLower(i) - mUpper(i))
+            qdot_midpoint = -3*s0(i)*(tUpper(i) - t_midpoint).^2 + 3*s1(i)*(t_midpoint-tLower(i)).^2 + ... 
+                s2(i) - s3(i);
+            vC2(i + ndof*(m-1),1) = abs(qdot_midpoint) - qdot_max(m);
+        end
+    end
+end
+
+% tauC = zeros((n_discretized * length(h) + 1) * ndof, 1);
+% t_index = 1;
+% for m = 1:ndof
+%     d_index = 1;
+%     for i=1:length(h)
+%         diff_time = h(i)/n_discretized;
+%         for t_inc = tLower(i):diff_time:(tUpper(i)-diff_time)
+%             qddot = -6*s0(i)*(tUpper(i) - t_inc) + 6*s1(i)*(t_inc-tLower(i)) + ... 
+%             tauC(t_index, 1) = dyn_params_M{d_index} * qddot;
+%             t_index = t_index + 1;
+%             d_index = d_index + 1;
+%         end
+%     end
+%     tauC(t_index, 1) = t_index;
+%     t_index = t_index + 1;
+% end
+
+
+
